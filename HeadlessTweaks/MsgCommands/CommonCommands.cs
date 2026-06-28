@@ -1,14 +1,13 @@
-﻿using FrooxEngine;
+﻿using System;
+using System.Diagnostics;
 using System.Linq;
-using SkyFrost.Base;
 using System.Reflection;
 using System.Threading.Tasks;
-using System;
-using System.Diagnostics;
+using FrooxEngine;
+using SkyFrost.Base;
 
 namespace HeadlessTweaks
 {
-
     partial class MessageCommands
     {
         public partial class Commands
@@ -39,22 +38,23 @@ namespace HeadlessTweaks
                     {
                         userMessages.SendTextMessage($"Command '{commandStr}' not found");
                         return;
-                    };
-                    
+                    }
+                    ;
+
                     /* Message to return:
-                     * 
+                     *
                      * /name usage
                      * description
                      * category
                      * aliases
                      */
 
-                    // Command 
+                    // Command
                     messages.Add($"/{attr.Name} {attr.Usage}");
                     messages.Add(attr.Description);
 
                     messages.Add("Category: " + attr.Category);
-                    
+
                     if (attr.Aliases.Length > 0)
                     {
                         messages.Add("Aliases:");
@@ -67,18 +67,18 @@ namespace HeadlessTweaks
                     return;
                 }
 
-
-
-
-
                 //var messages = new BatchMessageHelper(userMessages);
 
                 // Iterate over all commands and print them
                 var commandList = _RegisteredCommands.ToList();
 
                 // Ignore aliases defined in the CommandAttribute
-                commandList.RemoveAll(x => !(x.Value.GetCustomAttribute<CommandAttribute>()?.Name).Equals(x.Key, StringComparison.CurrentCultureIgnoreCase));
-
+                commandList.RemoveAll(x =>
+                    !(x.Value.GetCustomAttribute<CommandAttribute>()?.Name).Equals(
+                        x.Key,
+                        StringComparison.CurrentCultureIgnoreCase
+                    )
+                );
 
                 foreach (var command in commandList)
                 {
@@ -87,7 +87,8 @@ namespace HeadlessTweaks
                     if (attr != null)
                     {
                         // skip if permission level is higher than the user
-                        if (GetUserPermissionLevel(msg.SenderId) < attr.PermissionLevel) continue;
+                        if (GetUserPermissionLevel(msg.SenderId) < attr.PermissionLevel)
+                            continue;
 
                         var message = $"{attr.Name} - {attr.Description}";
 
@@ -100,7 +101,7 @@ namespace HeadlessTweaks
                         messages.Add(message, true);
                     }
                 }
-                
+
                 _ = messages.Send();
             }
 
@@ -136,7 +137,14 @@ namespace HeadlessTweaks
             // Invite me to a specific world by name or to the current world if no name is given
             // Usage: /reqInvite [?world name...]
 
-            [Command("reqInvite", "Requests an invite to a world", "Common", PermissionLevel.None, aliases: ["requestInvite"], usage: "[?world name...]")]
+            [Command(
+                "reqInvite",
+                "Requests an invite to a world",
+                "Common",
+                PermissionLevel.None,
+                aliases: ["requestInvite"],
+                usage: "[?world name...]"
+            )]
             public static void ReqInvite(UserMessages userMessages, Message msg, string[] args)
             {
                 World world = null;
@@ -148,9 +156,15 @@ namespace HeadlessTweaks
 
                 string worldName = string.Join(" ", args).Trim();
 
-                var worlds = Engine.Current.WorldManager.Worlds.Where(w => w != Userspace.UserspaceWorld);
+                var worlds = Engine.Current.WorldManager.Worlds.Where(w =>
+                    w != Userspace.UserspaceWorld
+                );
 
-                world = worlds.Where(w => w.RawName == worldName || w.Name == worldName || w.SessionId == worldName).FirstOrDefault();
+                world = worlds
+                    .Where(w =>
+                        w.RawName == worldName || w.Name == worldName || w.SessionId == worldName
+                    )
+                    .FirstOrDefault();
                 if (world == null)
                 {
                     // Prioritize index over partial search
@@ -167,16 +181,25 @@ namespace HeadlessTweaks
                     else
                     { // Do a partial match
                         // Todo maybe sort matches to the closest match?
-                        world = worlds.Where(w => w.RawName.Contains(worldName, StringComparison.InvariantCultureIgnoreCase)).FirstOrDefault();
+                        world = worlds
+                            .Where(w =>
+                                w.RawName.Contains(
+                                    worldName,
+                                    StringComparison.InvariantCultureIgnoreCase
+                                )
+                            )
+                            .FirstOrDefault();
                     }
                 }
 
                 if (world == null)
                 {
-                    _ = userMessages.SendTextMessage($"No world found with the name \"{worldName}\"");
+                    _ = userMessages.SendTextMessage(
+                        $"No world found with the name \"{worldName}\""
+                    );
                     return;
                 }
-            Invite:
+                Invite:
 
                 // check if user can join world
                 if (!CanUserJoin(world, msg.SenderId, false))
@@ -196,8 +219,14 @@ namespace HeadlessTweaks
             public static void GetSessionOrb(UserMessages userMessages, Message msg, string[] args)
             {
                 // Get world by name or user world
-                World world = GetWorldOrUserWorld(userMessages, string.Join(" ", args), msg.SenderId, true);
-                if (world == null) return;
+                World world = GetWorldOrUserWorld(
+                    userMessages,
+                    string.Join(" ", args),
+                    msg.SenderId,
+                    true
+                );
+                if (world == null)
+                    return;
 
                 // check if user can join world
                 if (!CanUserJoin(world, msg.SenderId, false))
@@ -210,8 +239,12 @@ namespace HeadlessTweaks
                 world.RunSynchronously(async () =>
                 {
                     var orb = world.GetOrb(true);
-                    var a = await userMessages.SendObjectMessage(orb, OfficialAssets.Graphics.Icons.Dash.Worlds);
-                    if (a) world.AllowUserToJoin(msg.SenderId);
+                    var a = await userMessages.SendObjectMessage(
+                        orb,
+                        OfficialAssets.Graphics.Icons.Dash.Worlds
+                    );
+                    if (a)
+                        world.AllowUserToJoin(msg.SenderId);
                 });
             }
 
@@ -223,9 +256,16 @@ namespace HeadlessTweaks
             {
                 var messages = new BatchMessageHelper(userMessages);
                 int num = 0;
-                foreach (World world1 in Engine.Current.WorldManager.Worlds.Where(w => w != Userspace.UserspaceWorld && CanUserJoin(w, msg.SenderId, false)))
+                foreach (
+                    World world1 in Engine.Current.WorldManager.Worlds.Where(w =>
+                        w != Userspace.UserspaceWorld && CanUserJoin(w, msg.SenderId, false)
+                    )
+                )
                 {
-                    messages.Add($"[{num}] {world1.Name} | {world1.ActiveUserCount} ({world1.UserCount}) | {world1.AccessLevel}", true);
+                    messages.Add(
+                        $"[{num}] {world1.Name} | {world1.ActiveUserCount} ({world1.UserCount}) | {world1.AccessLevel}",
+                        true
+                    );
                     ++num;
                 }
                 _ = messages.Send();
@@ -240,24 +280,31 @@ namespace HeadlessTweaks
                 string sender = msg.SenderId;
 
                 var senderContact = Engine.Current.Cloud.Contacts.GetContact(msg.SenderId);
-                if(senderContact != null) {
+                if (senderContact != null)
+                {
                     sender = senderContact.ContactUsername;
                 }
 
                 HeadlessTweaks.Warn($"Shutdown initiated via command from user {sender}");
-                
 
                 var headlessProgram = Type.GetType("FrooxEngine.Headless.Program, Resonite");
-                var shutdownMethod = headlessProgram?.GetMethod("Shutdown", BindingFlags.NonPublic | BindingFlags.Static);
+                var shutdownMethod = headlessProgram?.GetMethod(
+                    "Shutdown",
+                    BindingFlags.NonPublic | BindingFlags.Static
+                );
 
-                if(shutdownMethod != null)
+                if (shutdownMethod != null)
                 {
                     await (Task)shutdownMethod.Invoke(null, null);
                     Process.GetCurrentProcess().Kill(); // Process does not fully end without interacting with the terminal, so lets force it
                     return;
                 }
-                HeadlessTweaks.Error($"Could not find headless shut down method: \n\t\tProgram type: {headlessProgram}\n\t\tShutdown Method: {shutdownMethod}");
-                await userMessages.SendTextMessage($"Could not find headless specific shutdown method\nDefaulting to Userspace shutdown");
+                HeadlessTweaks.Error(
+                    $"Could not find headless shut down method: \n\t\tProgram type: {headlessProgram}\n\t\tShutdown Method: {shutdownMethod}"
+                );
+                await userMessages.SendTextMessage(
+                    $"Could not find headless specific shutdown method\nDefaulting to Userspace shutdown"
+                );
 
                 Userspace.ExitApp(false);
             }
@@ -271,12 +318,15 @@ namespace HeadlessTweaks
                 throw new Exception("Throw Error test command");
             }
 
-            
             // Throw an error asynchronously
             // Usage: /throwErrAsync
 
             [Command("throwErrAsync", "Throw Error Asynchronously", "Debug", PermissionLevel.Owner)]
-            public static async Task ThrowErrorAsync(UserMessages userMessages, Message msg, string[] args)
+            public static async Task ThrowErrorAsync(
+                UserMessages userMessages,
+                Message msg,
+                string[] args
+            )
             {
                 await Task.CompletedTask;
                 throw new Exception("Async Throw Error test command");

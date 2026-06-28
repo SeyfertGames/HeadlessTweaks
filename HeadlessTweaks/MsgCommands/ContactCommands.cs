@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using Elements.Core;
 using FrooxEngine;
 using SkyFrost.Base;
-using Elements.Core;
-
-using System.Threading.Tasks;
 
 namespace HeadlessTweaks
 {
@@ -15,7 +14,13 @@ namespace HeadlessTweaks
             // Message User
             // Usage: /message [user] [message]
 
-            [Command("message", "Message a user", "Headless Management", PermissionLevel.Owner, usage: "[user] [message...]")]
+            [Command(
+                "message",
+                "Message a user",
+                "Headless Management",
+                PermissionLevel.Owner,
+                usage: "[user] [message...]"
+            )]
             public static async Task Message(UserMessages userMessages, Message msg, string[] args)
             {
                 if (args.Length < 2)
@@ -29,10 +34,12 @@ namespace HeadlessTweaks
                 string message = string.Join(" ", args.Skip(1));
 
                 var um = GetUserMessages(userId);
-                
+
                 if (um == null)
                 {
-                    _ = userMessages.SendTextMessage($"User \"{args[0]}\" is not contacts with this headless");
+                    _ = userMessages.SendTextMessage(
+                        $"User \"{args[0]}\" is not contacts with this headless"
+                    );
                     return;
                 }
                 _ = um.SendTextMessage(message);
@@ -41,13 +48,24 @@ namespace HeadlessTweaks
             // List headless contacts
             // Usage: /contacts
 
-            [Command("contacts", "List headless contacts", "Headless Management", PermissionLevel.Owner)]
+            [Command(
+                "contacts",
+                "List headless contacts",
+                "Headless Management",
+                PermissionLevel.Owner
+            )]
             public static void Contacts(UserMessages userMessages, Message msg, string[] args)
             {
                 var messages = new BatchMessageHelper(userMessages);
 
                 // This is messy becaus I am rushing, I'll clean this up eventually
-                List<Contact>[] categories = [[], [], [], []];
+                List<Contact>[] categories =
+                [
+                    [],
+                    [],
+                    [],
+                    [],
+                ];
                 string[] groups =
                 [
                     "Requested Contacts: ",
@@ -58,28 +76,34 @@ namespace HeadlessTweaks
 
                 /*
                     Requested, // Show purple
-		            Ignored, // Hide
-		            Blocked, // Show red append (BLOCKED)?
-		            Accepted // Show normally
+                    Ignored, // Hide
+                    Blocked, // Show red append (BLOCKED)?
+                    Accepted // Show normally
                 */
 
                 Engine.Current.Cloud.Contacts.ForeachContact(contact =>
                 {
-                    if (contact.ContactUserId == userMessages.Cloud.Platform.AppUserId || contact.IsSelfContact)
+                    if (
+                        contact.ContactUserId == userMessages.Cloud.Platform.AppUserId
+                        || contact.IsSelfContact
+                    )
                         return;
-                    
+
                     colorX color = RadiantUI_Constants.TEXT_COLOR;
 
                     if (contact.IsContactRequest)
                     {
                         categories[0].Add(contact);
-                    } else if (contact.ContactStatus == ContactStatus.Accepted)
+                    }
+                    else if (contact.ContactStatus == ContactStatus.Accepted)
                     {
                         categories[1].Add(contact);
-                    } else if (contact.ContactStatus == ContactStatus.Ignored)
+                    }
+                    else if (contact.ContactStatus == ContactStatus.Ignored)
                     {
                         categories[2].Add(contact);
-                    } else if (contact.ContactStatus == ContactStatus.Blocked)
+                    }
+                    else if (contact.ContactStatus == ContactStatus.Blocked)
                     {
                         categories[3].Add(contact);
                     }
@@ -87,13 +111,17 @@ namespace HeadlessTweaks
 
                 for (int i = 0; i < categories.Length; i++)
                 {
-                    if (categories[i].Count == 0) continue;
+                    if (categories[i].Count == 0)
+                        continue;
 
                     messages.Add($"<size=130%>{groups[i]}</size>", false, true);
-                    
-                    for(int j = 0; j < categories[i].Count; j++)
+
+                    for (int j = 0; j < categories[i].Count; j++)
                     {
-                        messages.Add($"{categories[i][j].ContactUsername} - [{categories[i][j].ContactUserId}]", true);
+                        messages.Add(
+                            $"{categories[i][j].ContactUsername} - [{categories[i][j].ContactUserId}]",
+                            true
+                        );
                     }
                 }
 
@@ -103,8 +131,18 @@ namespace HeadlessTweaks
             // Add contact
             // Usage: /addContact [user]
 
-            [Command("addContact", "Add contact", "Headless Management", PermissionLevel.Owner, usage: "[user]")]
-            public static async Task Addcontact(UserMessages userMessages, Message msg, string[] args)
+            [Command(
+                "addContact",
+                "Add contact",
+                "Headless Management",
+                PermissionLevel.Owner,
+                usage: "[user]"
+            )]
+            public static async Task Addcontact(
+                UserMessages userMessages,
+                Message msg,
+                string[] args
+            )
             {
                 if (args.Length < 1)
                 {
@@ -113,29 +151,36 @@ namespace HeadlessTweaks
                 }
 
                 string userId = await TryGetUserId(args[0]);
-                
+
                 var contact = Engine.Current.Cloud.Contacts.GetContact(userId);
 
                 if (contact != null)
                 {
                     if (contact.ContactStatus == ContactStatus.Accepted)
                     {
-                        _ = userMessages.SendTextMessage($"User \"{args[0]}\" is already contacts with this headless");
+                        _ = userMessages.SendTextMessage(
+                            $"User \"{args[0]}\" is already contacts with this headless"
+                        );
                         return;
-                    } else if (contact.ContactStatus == ContactStatus.Blocked)
+                    }
+                    else if (contact.ContactStatus == ContactStatus.Blocked)
                     {
-                        _ = userMessages.SendTextMessage($"User \"{args[0]}\" is blocked from this headless");
+                        _ = userMessages.SendTextMessage(
+                            $"User \"{args[0]}\" is blocked from this headless"
+                        );
                         return;
                     }
 
                     await Engine.Current.Cloud.Contacts.AddContact(contact);
-                    _ = userMessages.SendTextMessage($"Contact request accepted from user \"{args[0]}\"");
+                    _ = userMessages.SendTextMessage(
+                        $"Contact request accepted from user \"{args[0]}\""
+                    );
                     return;
                 }
 
                 var foundUserResult = await Engine.Current.Cloud.Users.GetUser(userId);
-                
-                if(!foundUserResult.IsOK)
+
+                if (!foundUserResult.IsOK)
                 {
                     _ = userMessages.SendTextMessage($"Could not find user \"{args[0]}\"");
                     return;
@@ -148,8 +193,18 @@ namespace HeadlessTweaks
             // Remove contact
             // Usage: /removeContact [user id]
 
-            [Command("removeContact", "Remove contact", "Headless Management", PermissionLevel.Owner, usage: "[user]")]
-            public static async Task Removecontact(UserMessages userMessages, Message msg, string[] args)
+            [Command(
+                "removeContact",
+                "Remove contact",
+                "Headless Management",
+                PermissionLevel.Owner,
+                usage: "[user]"
+            )]
+            public static async Task Removecontact(
+                UserMessages userMessages,
+                Message msg,
+                string[] args
+            )
             {
                 if (args.Length < 1)
                 {
@@ -159,7 +214,7 @@ namespace HeadlessTweaks
 
                 string userId = await TryGetUserId(args[0]);
 
-                if(userId == null)
+                if (userId == null)
                 {
                     _ = userMessages.SendTextMessage($"User \"{args[0]}\" could not be found");
                     return;
@@ -175,16 +230,19 @@ namespace HeadlessTweaks
                     return;
                 }
 
-
                 if (contact != null && contact.IsContactRequest)
                 {
                     await Engine.Current.Cloud.Contacts.IgnoreRequest(contact);
 
-                    _ = userMessages.SendTextMessage($"Ingoring contact request from \"{args[0]}\"");
+                    _ = userMessages.SendTextMessage(
+                        $"Ingoring contact request from \"{args[0]}\""
+                    );
                     return;
                 }
 
-                _ = userMessages.SendTextMessage($"User \"{args[0]}\" is not contacts with this headless");
+                _ = userMessages.SendTextMessage(
+                    $"User \"{args[0]}\" is not contacts with this headless"
+                );
             }
         }
     }

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using FrooxEngine;
-using SkyFrost.Base;
-using Elements.Core;
-using ResoniteModLoader;
 using System.Timers;
+using Elements.Core;
+using FrooxEngine;
 using Renderite.Shared;
+using ResoniteModLoader;
+using SkyFrost.Base;
 
 namespace HeadlessTweaks
 {
@@ -17,27 +17,37 @@ namespace HeadlessTweaks
         {
             string message = text;
             if (color != RadiantUI_Constants.TEXT_COLOR)
-                 message = "<color=" + color.ToHexString(color.a != 1f) + ">" + text + "</color>";
+                message = "<color=" + color.ToHexString(color.a != 1f) + ">" + text + "</color>";
             await um.SendTextMessage(message);
         }
 
         //  Extend MessageManager.UserMessages with SendObjectMessage(slot)
-        public static async Task<bool> SendObjectMessage(this UserMessages userMessages, Slot slot, Uri thumbnail = null, bool cleanUpSlot = true)
+        public static async Task<bool> SendObjectMessage(
+            this UserMessages userMessages,
+            Slot slot,
+            Uri thumbnail = null,
+            bool cleanUpSlot = true
+        )
         {
-            if (thumbnail == null) thumbnail = OfficialAssets.Graphics.Icons.Dash.Folder;
+            if (thumbnail == null)
+                thumbnail = OfficialAssets.Graphics.Icons.Dash.Folder;
 
-
-            List<IItemThumbnailSource> componentsInChildren = slot.GetComponentsInChildren<IItemThumbnailSource>(
-                s => s.HasThumbnail && s.Slot.IsActive, true);
+            List<IItemThumbnailSource> componentsInChildren =
+                slot.GetComponentsInChildren<IItemThumbnailSource>(
+                    s => s.HasThumbnail && s.Slot.IsActive,
+                    true
+                );
 
             StaticTexture2D asset = null;
             if (componentsInChildren.Count == 0)
             {
                 HeadlessTweaks.Msg($"No thumbnail found in slot {slot.Name}, attaching thumbnail");
-                
+
                 await slot.World.Coroutines.StartTask(async () =>
                 {
-                    asset = slot.World.AssetsSlot.AddSlot(slot.Name + "Thumbnail").AttachTexture(thumbnail);
+                    asset = slot
+                        .World.AssetsSlot.AddSlot(slot.Name + "Thumbnail")
+                        .AttachTexture(thumbnail);
                     var a = slot.AttachComponent<ItemTextureThumbnailSource>();
                     a.Texture.Target = asset;
 
@@ -45,16 +55,19 @@ namespace HeadlessTweaks
                     await new NextUpdate();
                     await new ToBackground();
                 });
-                
+
                 bool loaded = await asset.RawAsset.WaitForLoad();
 
                 if (!loaded)
                 {
-                    HeadlessTweaks.Warn("Thumbnail failed to load, canceling as headlesses can't render thumbnails");
-                    await userMessages.SendTextMessage("Thumbnail failed to load, canceling as headlesses can't render thumbnails");
+                    HeadlessTweaks.Warn(
+                        "Thumbnail failed to load, canceling as headlesses can't render thumbnails"
+                    );
+                    await userMessages.SendTextMessage(
+                        "Thumbnail failed to load, canceling as headlesses can't render thumbnails"
+                    );
                     return false;
                 }
-
             }
 
             var msgData = await userMessages.CreateObjectMessage(slot, true);
@@ -75,29 +88,47 @@ namespace HeadlessTweaks
         }
 
         // A modified version of InviteRequestManager.ForwardToAdmins
-        public static async Task ForwardInviteRequestToAdmins(this UserMessages userMessages, InviteRequest inviteRequest, World world)
+        public static async Task ForwardInviteRequestToAdmins(
+            this UserMessages userMessages,
+            InviteRequest inviteRequest,
+            World world
+        )
         {
             HashSet<string> inviteHandlerUsers = world.GetInviteHandlerUsers();
             inviteHandlerUsers.RemoveWhere(u =>
             {
                 if (userMessages.Cloud.Contacts.IsContact(u))
                     return false;
-                HeadlessTweaks.Warn("User " + u + " is admin of the session " + world.Name + ", but is not contact with the host. Cannot forward invite request.");
+                HeadlessTweaks.Warn(
+                    "User "
+                        + u
+                        + " is admin of the session "
+                        + world.Name
+                        + ", but is not contact with the host. Cannot forward invite request."
+                );
                 return true;
             });
             if (inviteHandlerUsers.Count == 0)
             {
-                await userMessages.SendTextMessage("There are currently no admins available to handle this invite request.");
+                await userMessages.SendTextMessage(
+                    "There are currently no admins available to handle this invite request."
+                );
             }
             else
             {
-                bool isContactOfHost = userMessages.Cloud.Contacts.IsContact(inviteRequest.UserIdToInvite);
+                bool isContactOfHost = userMessages.Cloud.Contacts.IsContact(
+                    inviteRequest.UserIdToInvite
+                );
 
                 var sessionRequest = inviteRequest.Clone();
                 sessionRequest.ForSessionId = world.SessionId;
                 sessionRequest.ForSessionName = world.Name;
 
-                await world.Engine.Cloud.InviteRequests.ForwardInviteRequest(sessionRequest, isContactOfHost, [.. inviteHandlerUsers]);
+                await world.Engine.Cloud.InviteRequests.ForwardInviteRequest(
+                    sessionRequest,
+                    isContactOfHost,
+                    [.. inviteHandlerUsers]
+                );
             }
         }
 
@@ -120,8 +151,11 @@ namespace HeadlessTweaks
             orb.WorldName = world.Name;
             //world.HostUser.ThumbnailUrl
             var thumbnailData = Userspace.GetThumbnailData(world);
-            if (thumbnailData != null && thumbnailData.PublicThumbnail != null) {
-                orb.ThumbnailTexURL = Engine.Current.Cloud.Assets.ThumbnailToHttp(thumbnailData.PublicThumbnail);
+            if (thumbnailData != null && thumbnailData.PublicThumbnail != null)
+            {
+                orb.ThumbnailTexURL = Engine.Current.Cloud.Assets.ThumbnailToHttp(
+                    thumbnailData.PublicThumbnail
+                );
             }
             HeadlessTweaks.Msg("Orb created");
             return root;
@@ -131,21 +165,33 @@ namespace HeadlessTweaks
         {
             return HeadlessTweaks.config.GetValue(key);
         }
-        public static void SetValue<T>(this ModConfigurationKey<T> key, T value, string eventLabel = null)
+
+        public static void SetValue<T>(
+            this ModConfigurationKey<T> key,
+            T value,
+            string eventLabel = null
+        )
         {
             HeadlessTweaks.config.Set(key, value, eventLabel);
         }
-        public static void SetValueAndSave<T>(this ModConfigurationKey<T> key, T value, string eventLabel = null)
+
+        public static void SetValueAndSave<T>(
+            this ModConfigurationKey<T> key,
+            T value,
+            string eventLabel = null
+        )
         {
             HeadlessTweaks.config.Set(key, value, eventLabel);
             HeadlessTweaks.config.Save();
         }
 
-
         // Wait for response using tastcompletionsoruce
         // Add a task completion source to the dictionary MessageCommands.responseTasks
 
-        public static async Task<Message> WaitForResponse(this UserMessages userMessages, double timeLimit = 0)
+        public static async Task<Message> WaitForResponse(
+            this UserMessages userMessages,
+            double timeLimit = 0
+        )
         {
             var tcs = new TaskCompletionSource<Message>();
             if (timeLimit > 0)
@@ -153,7 +199,7 @@ namespace HeadlessTweaks
                 var timer = new Timer(timeLimit * 1000);
                 timer.Elapsed += (sender, e) =>
                 {
-                    // Check if the task is already completed 
+                    // Check if the task is already completed
                     // If so clean up timer and return
                     if (tcs.Task.IsCompleted)
                     {
@@ -162,7 +208,10 @@ namespace HeadlessTweaks
                     }
 
                     // Send the user a message to let them know the response has timed out
-                    _ = userMessages.SendTextMessage("Response timed out", RadiantUI_Constants.Hero.RED);
+                    _ = userMessages.SendTextMessage(
+                        "Response timed out",
+                        RadiantUI_Constants.Hero.RED
+                    );
 
                     // cancel the task
                     tcs.TrySetResult(null);
@@ -180,7 +229,11 @@ namespace HeadlessTweaks
 
         // Request an object message from the user
 
-        public static async Task<FrooxEngine.Store.Record> RequestObjectMessage(this UserMessages userMessages, string message, double timeLimit = 45)
+        public static async Task<FrooxEngine.Store.Record> RequestObjectMessage(
+            this UserMessages userMessages,
+            string message,
+            double timeLimit = 45
+        )
         {
             _ = userMessages.SendTextMessage(message);
 
@@ -199,7 +252,11 @@ namespace HeadlessTweaks
             return response.ExtractContent<FrooxEngine.Store.Record>();
         }
 
-        public static async Task<string> RequestTextMessage(this UserMessages userMessages, string message, double timeLimit = 45)
+        public static async Task<string> RequestTextMessage(
+            this UserMessages userMessages,
+            string message,
+            double timeLimit = 45
+        )
         {
             _ = userMessages.SendTextMessage(message);
 
@@ -218,27 +275,28 @@ namespace HeadlessTweaks
             return response.Content;
         }
 
-
-        public static Contact ToContact(this SkyFrost.Base.User user) => new()
-        {
-            ContactUsername = user.Username,
-            AlternateUsernames = user.AlternateNormalizedNames,
-            ContactUserId = user.Id,
-            ContactStatus = ContactStatus.SearchResult,
-            Profile = user.Profile
-        };
-
+        public static Contact ToContact(this SkyFrost.Base.User user) =>
+            new()
+            {
+                ContactUsername = user.Username,
+                AlternateUsernames = user.AlternateNormalizedNames,
+                ContactUserId = user.Id,
+                ContactStatus = ContactStatus.SearchResult,
+                Profile = user.Profile,
+            };
 
         public static async Task<bool> WaitForLoad(this IAsset asset)
         {
             if (asset == null)
                 return false;
-            
+
             while (true)
             {
-                if (asset == null || asset.LoadState == AssetLoadState.Failed) return false;
+                if (asset == null || asset.LoadState == AssetLoadState.Failed)
+                    return false;
 
-                if (asset.LoadState == AssetLoadState.FullyLoaded) return true;
+                if (asset.LoadState == AssetLoadState.FullyLoaded)
+                    return true;
 
                 await Task.Delay(100);
             }

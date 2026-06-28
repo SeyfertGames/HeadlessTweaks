@@ -5,6 +5,6 @@
         None,
         Moderator,
         Administrator,
-        Owner
+        Owner,
     }
 }

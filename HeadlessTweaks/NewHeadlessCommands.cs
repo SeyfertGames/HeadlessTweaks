@@ -1,7 +1,7 @@
-﻿using HarmonyLib;
-using System;
-using FrooxEngine.Headless;
+﻿using System;
 using FrooxEngine;
+using FrooxEngine.Headless;
+using HarmonyLib;
 
 namespace HeadlessTweaks
 {
@@ -9,7 +9,9 @@ namespace HeadlessTweaks
     {
         internal static void Init(Harmony harmony)
         {
-            var target = typeof(HeadlessCommands).GetMethod(nameof(HeadlessCommands.SetupCommonCommands));
+            var target = typeof(HeadlessCommands).GetMethod(
+                nameof(HeadlessCommands.SetupCommonCommands)
+            );
             var postfix = typeof(NewHeadlessCommands).GetMethod(nameof(SetupNewCommands));
 
             harmony.Patch(target, postfix: new HarmonyMethod(method: postfix));
@@ -18,55 +20,74 @@ namespace HeadlessTweaks
         public static void SetupNewCommands(CommandHandler handler)
         {
             HeadlessTweaks.Msg("Registering new console commands");
-            handler.RegisterCommand(new GenericCommand("setUserPermission", "Sets a user's permission level", "<user> <permission>", async (h, world, args) =>
-            {
-                if (args.Count != 2)
-                {
-                    HeadlessTweaks.Warn("Please include a user and a permission level");
-                    return;
-                }
-
-                var user = args[0];
-                var permission = args[1];
-
-                var userId = await MessageCommands.TryGetUserId(user);
-
-                if (userId == null)
-                {
-                    HeadlessTweaks.Msg($"Could not find user '{user}', use a user id to override this check");
-                    return;
-                }
-
-
-                if (Enum.TryParse(permission, true, out PermissionLevel levelEnum))
-                {
-                    var levels = HeadlessTweaks.PermissionLevels.GetValue();
-                    levels[userId] = levelEnum;
-                    HeadlessTweaks.PermissionLevels.SetValueAndSave(levels);
-
-                    HeadlessTweaks.Msg($"Permission level set to {levelEnum} for {userId}");
-                }
-                else
-                {
-                    HeadlessTweaks.Warn("Invalid permission level");
-                }
-            }));
-
-
-            if (HeadlessTweaks.config.GetValue(HeadlessTweaks.UseDiscordWebhook) && HeadlessTweaks.isDiscordLoaded)
-            {
-                handler.RegisterCommand(new GenericCommand("sendToDiscord", "Sends a message to discord", "<message>", (h, world, args) =>
-                {
-                    if (args.Count == 0)
+            handler.RegisterCommand(
+                new GenericCommand(
+                    "setUserPermission",
+                    "Sets a user's permission level",
+                    "<user> <permission>",
+                    async (h, world, args) =>
                     {
-                        HeadlessTweaks.Warn("Please include a message");
-                        return;
-                    }
+                        if (args.Count != 2)
+                        {
+                            HeadlessTweaks.Warn("Please include a user and a permission level");
+                            return;
+                        }
 
-                    DiscordIntegration.DiscordHelper.SendEmbed(string.Join(" ", [.. args]), RadiantUI_Constants.Hero.PURPLE);
-                }));
+                        var user = args[0];
+                        var permission = args[1];
+
+                        var userId = await MessageCommands.TryGetUserId(user);
+
+                        if (userId == null)
+                        {
+                            HeadlessTweaks.Msg(
+                                $"Could not find user '{user}', use a user id to override this check"
+                            );
+                            return;
+                        }
+
+                        if (Enum.TryParse(permission, true, out PermissionLevel levelEnum))
+                        {
+                            var levels = HeadlessTweaks.PermissionLevels.GetValue();
+                            levels[userId] = levelEnum;
+                            HeadlessTweaks.PermissionLevels.SetValueAndSave(levels);
+
+                            HeadlessTweaks.Msg($"Permission level set to {levelEnum} for {userId}");
+                        }
+                        else
+                        {
+                            HeadlessTweaks.Warn("Invalid permission level");
+                        }
+                    }
+                )
+            );
+
+            if (
+                HeadlessTweaks.config.GetValue(HeadlessTweaks.UseDiscordWebhook)
+                && HeadlessTweaks.isDiscordLoaded
+            )
+            {
+                handler.RegisterCommand(
+                    new GenericCommand(
+                        "sendToDiscord",
+                        "Sends a message to discord",
+                        "<message>",
+                        (h, world, args) =>
+                        {
+                            if (args.Count == 0)
+                            {
+                                HeadlessTweaks.Warn("Please include a message");
+                                return;
+                            }
+
+                            DiscordIntegration.DiscordHelper.SendEmbed(
+                                string.Join(" ", [.. args]),
+                                RadiantUI_Constants.Hero.PURPLE
+                            );
+                        }
+                    )
+                );
             }
         }
-
     }
 }
