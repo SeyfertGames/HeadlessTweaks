@@ -33,6 +33,15 @@ namespace HeadlessTweaks
                 );
                 if (world == null)
                     return;
+                if (
+                    !CheckWorldPermission(
+                        userMessages,
+                        msg.SenderId,
+                        world,
+                        PermissionLevel.Moderator
+                    )
+                )
+                    return;
 
                 // List users in world
                 var users = world.AllUsers.ToList();
@@ -75,6 +84,15 @@ namespace HeadlessTweaks
 
                 World world = GetWorldOrUserWorld(userMessages, worldName, msg.SenderId);
                 if (world == null)
+                    return;
+                if (
+                    !CheckWorldPermission(
+                        userMessages,
+                        msg.SenderId,
+                        world,
+                        PermissionLevel.Moderator
+                    )
+                )
                     return;
 
                 _ = userMessages.SendTextMessage($"Starting save for world \"{world.Name}\"");
@@ -339,6 +357,15 @@ namespace HeadlessTweaks
                 var world = GetWorldOrUserWorld(userMessages, worldName, userId, true);
                 if (world == null)
                     return;
+                if (
+                    !CheckWorldPermission(
+                        userMessages,
+                        msg.SenderId,
+                        world,
+                        PermissionLevel.Administrator
+                    )
+                )
+                    return;
 
                 var user = world.GetUserByUserId(userId);
                 if (user == null)
@@ -597,6 +624,15 @@ namespace HeadlessTweaks
                 var world = GetWorldOrUserWorld(userMessages, worldName, msg.SenderId, true);
                 if (world == null)
                     return;
+                if (
+                    !CheckWorldPermission(
+                        userMessages,
+                        msg.SenderId,
+                        world,
+                        PermissionLevel.Moderator
+                    )
+                )
+                    return;
 
                 // Wait for response from the user to confirm they want to close the world
                 var confirmMsg = await userMessages.RequestTextMessage(
@@ -669,6 +705,15 @@ namespace HeadlessTweaks
                 var world = GetWorldOrUserWorld(userMessages, worldName, msg.SenderId, false);
                 if (world == null)
                     return;
+                if (
+                    !CheckWorldPermission(
+                        userMessages,
+                        msg.SenderId,
+                        world,
+                        PermissionLevel.Moderator
+                    )
+                )
+                    return;
 
                 // Get the session
                 world.AccessLevel = accessLevel;
@@ -719,6 +764,15 @@ namespace HeadlessTweaks
                 var world = GetWorldOrUserWorld(userMessages, worldName, msg.SenderId, false);
                 if (world == null)
                     return;
+                if (
+                    !CheckWorldPermission(
+                        userMessages,
+                        msg.SenderId,
+                        world,
+                        PermissionLevel.Moderator
+                    )
+                )
+                    return;
 
                 world.HideFromListing = hide;
                 if (hide)
@@ -754,6 +808,15 @@ namespace HeadlessTweaks
                 // Get the users world or focused world
                 var world = GetWorldOrUserWorld(userMessages, worldName, msg.SenderId, false);
                 if (world == null)
+                    return;
+                if (
+                    !CheckWorldPermission(
+                        userMessages,
+                        msg.SenderId,
+                        world,
+                        PermissionLevel.Moderator
+                    )
+                )
                     return;
 
                 // Get the new name

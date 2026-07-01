@@ -24,6 +24,47 @@ namespace HeadlessTweaks
                 .Value;
         }
 
+        private static PermissionLevel GetUserMaxPermissionLevel(string userId)
+        {
+            var globalLevel = GetUserPermissionLevel(userId);
+            var worldScoped = HeadlessTweaks.WorldScopedPermissions.GetValue();
+            if (!worldScoped.TryGetValue(userId, out var scopedWorlds) || scopedWorlds.Count == 0)
+                return globalLevel;
+            var maxLevel = globalLevel;
+            foreach (var lvl in scopedWorlds.Values)
+                if (lvl > maxLevel)
+                    maxLevel = lvl;
+            return maxLevel;
+        }
+
+        private static PermissionLevel GetUserPermissionLevelForWorld(string userId, World world)
+        {
+            var globalLevel = GetUserPermissionLevel(userId);
+            var worldScoped = HeadlessTweaks.WorldScopedPermissions.GetValue();
+            if (
+                worldScoped.TryGetValue(userId, out var scopedWorlds)
+                && scopedWorlds.TryGetValue(world.RawName, out var scopedLevel)
+                && scopedLevel > globalLevel
+            )
+                return scopedLevel;
+            return globalLevel;
+        }
+
+        private static bool CheckWorldPermission(
+            UserMessages userMessages,
+            string senderId,
+            World world,
+            PermissionLevel requiredLevel
+        )
+        {
+            if (GetUserPermissionLevelForWorld(senderId, world) >= requiredLevel)
+                return true;
+            _ = userMessages.SendTextMessage(
+                $"You do not have permission to manage world \"{world.Name}\"."
+            );
+            return false;
+        }
+
         public static async Task<string> TryGetUserId(
             string value,
             bool allowAnyUserId = true,

@@ -100,6 +100,15 @@ namespace HeadlessTweaks
         > PermissionLevels = new("PermissionLevels", "Permission Levels", () => []);
 
         [AutoRegisterConfigKey]
+        public static readonly ModConfigurationKey<
+            Dictionary<string, Dictionary<string, PermissionLevel>>
+        > WorldScopedPermissions = new(
+            "WorldScopedPermissions",
+            "World Scoped Permissions",
+            () => []
+        );
+
+        [AutoRegisterConfigKey]
         public static readonly ModConfigurationKey<Dictionary<string, string>> WorldRoster = new(
             "WorldRoster",
             "World Roster",
