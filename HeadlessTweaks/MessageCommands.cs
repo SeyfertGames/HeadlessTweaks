@@ -122,7 +122,10 @@ namespace HeadlessTweaks
                             _ = userMessages.SendTextMessage("Unknown command");
                             break;
                         }
-                        if (cmdAttr.PermissionLevel > GetUserMaxPermissionLevel(message.SenderId))
+                        var permissionLevelToCheck = cmdAttr.WorldScoped
+                            ? GetUserMaxPermissionLevel(message.SenderId)
+                            : GetUserPermissionLevel(message.SenderId);
+                        if (cmdAttr.PermissionLevel > permissionLevelToCheck)
                         {
                             _ = userMessages.SendTextMessage(
                                 "You do not have permission to use that command."
