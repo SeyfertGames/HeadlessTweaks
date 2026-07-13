@@ -11,7 +11,7 @@ namespace HeadlessTweaks
     {
         public override string Name => "HeadlessTweaks";
         public override string Author => "New_Project_Final_Final_WIP";
-        public override string Version => "2.2.0";
+        public override string Version => "2.3.2";
         public override string Link =>
             "https://github.com/New-Project-Final-Final-WIP/HeadlessTweaks";
 
